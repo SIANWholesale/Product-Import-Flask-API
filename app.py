@@ -37,7 +37,6 @@ def process_excel():
             mimetype="text/csv",
             as_attachment=True,
             download_name="import_product.csv",
-            cache_timeout=0
         )
 
     except Exception as e:
