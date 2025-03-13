@@ -8,21 +8,17 @@ app = Flask(__name__)
 @app.route('/process_excel', methods=['POST'])
 def process_excel():
     try:
-        # Ensure request is JSON
-        if not request.is_json:
-            return {"error": "Request must be JSON"}, 400
-
-        # Parse JSON request data
-        data = request.get_json()
+        # Get the file URL from Zapier request
+        data = request.form
         file_url = data.get("file_url")
 
         if not file_url:
-            return {"error": "No file URL provided"}, 400
+            return "No file URL provided", 400
 
         # Download the file from OneDrive
-        response = requests.get(file_url, stream=True)
+        response = requests.get(file_url)
         if response.status_code != 200:
-            return {"error": f"Failed to download file. Status: {response.status_code}"}, 400
+            return f"Failed to download file. Status: {response.status_code}", 400
 
         # Read Excel file into Pandas DataFrame
         df = pd.read_excel(BytesIO(response.content), sheet_name=0, dtype=str)
@@ -35,7 +31,7 @@ def process_excel():
         df.to_csv(output, index=False, encoding='utf-8-sig')
         output.seek(0)
 
-        # Return CSV file using multipart/form-data
+        # Return CSV file as an attachment
         return send_file(
             output,
             mimetype="text/csv",
@@ -45,7 +41,7 @@ def process_excel():
         )
 
     except Exception as e:
-        return {"error": str(e)}, 500
+        return str(e), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
